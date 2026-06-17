@@ -110,18 +110,14 @@ release-dry-run: ## Build release binaries for every platform locally, without t
 	@ls -la dist/
 
 .PHONY: release
-release: ## Tag and push vX.Y.Z (VERSION=x.y.z required) — triggers .github/workflows/release.yml
+release: ## Test, tag, push — triggers GitHub Actions (VERSION=x.y.z required)
 	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
 	@if [ -n "$$(git status --porcelain)" ]; then echo "working tree not clean — commit or stash first"; exit 1; fi
-	@git fetch -q origin
-	@if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse @{u} 2>/dev/null)" ]; then \
-		echo "HEAD does not match the remote tracking branch — push your commits first so the tag is bound to code that's actually on GitHub"; \
-		exit 1; \
-	fi
 	$(MAKE) test
-	git tag -a "v$(VERSION)" -m "Release v$(VERSION)" "$$(git rev-parse HEAD)"
+	git tag -a "v$(VERSION)" -m "Release v$(VERSION)"
+	git push origin HEAD
 	git push origin "v$(VERSION)"
-	@echo "Tagged $$(git rev-parse --short HEAD) as v$(VERSION) and pushed — https://github.com/teochenglim/sora/actions"
+	@echo "Released v$(VERSION) — https://github.com/teochenglim/sora/actions"
 
 .PHONY: k8s-deploy
 k8s-deploy: ## Apply the plain Kubernetes manifests
