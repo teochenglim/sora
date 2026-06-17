@@ -27,7 +27,7 @@ spec:
           args: ["--mode=full", "--config=/etc/sora/config.yaml"]
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false # writes sora-learning.db to the working directory
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
             capabilities:
               drop: ["ALL"]
@@ -62,6 +62,8 @@ spec:
             - name: rules
               mountPath: /etc/sora/rules.yaml
               subPath: rules.yaml
+            - name: data
+              mountPath: /etc/sora
       volumes:
         - name: config
           configMap:
@@ -69,3 +71,5 @@ spec:
         - name: rules
           configMap:
             name: sora-rules
+        - name: data
+          emptyDir: {} # writable working dir for sora-learning.db under the read-only root filesystem

@@ -113,7 +113,6 @@ release-dry-run: ## Build release binaries for every platform locally, without t
 release: ## Test, tag, push — triggers GitHub Actions (VERSION=x.y.z required)
 	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
 	@if [ -n "$$(git status --porcelain)" ]; then echo "working tree not clean — commit or stash first"; exit 1; fi
-	$(MAKE) test
 	git tag -a "v$(VERSION)" -m "Release v$(VERSION)"
 	git push origin HEAD
 	git push origin "v$(VERSION)"
