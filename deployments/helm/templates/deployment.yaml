@@ -19,11 +19,19 @@ spec:
         {{- include "sora.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "sora.serviceAccountName" . }}
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: sora
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["--mode={{ .Values.mode }}", "--config=/etc/sora/config.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false # writes sora-learning.db to the working directory
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: {{ .Values.service.targetPort }}
               name: http

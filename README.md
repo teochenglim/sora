@@ -120,11 +120,23 @@ design/DESIGN.md       original full architecture spec
 
 ## Agent harness
 
-This repo is wired up with three layers of automated checks, so problems are caught as early as possible:
+This repo is wired up with several layers of automated checks, so problems are caught as early as possible:
 
 1. **Claude Code hook** (`.claude/settings.json` + `scripts/claude-post-edit-check.sh`) — gofmt + `go vet` runs automatically after Claude edits any `.go` file during development.
 2. **Git pre-commit hook** (`scripts/pre-commit.sh`) — gofmt, `go vet`, and the full race-enabled test suite run before every commit. Install with `make hooks-install`.
-3. **GitHub Actions** (`.github/workflows/ci.yml`) — vets, builds, and tests on every push/PR; cross-compiles for `linux/amd64` and `linux/arm64`; builds and pushes a multi-arch Docker image to `ghcr.io/teochenglim/sora` on pushes to `main`.
+3. **GitHub Actions CI** (`.github/workflows/ci.yml`) — vets, builds, and tests on every push/PR; cross-compiles for `linux/amd64` and `linux/arm64`; builds and pushes a multi-arch Docker image to `ghcr.io/teochenglim/sora:latest` on pushes to `main`.
+4. **Security scanning** (`.github/workflows/security.yml`) — Semgrep SAST and Trivy (dependency + built-image vulnerability scan) on every push/PR plus a weekly cron, with findings uploaded to the GitHub Security tab. Run the same checks locally with `make security`.
+
+## Releases
+
+`make release VERSION=x.y.z` tags and triggers `.github/workflows/release.yml`. It's deliberately strict about binding the tag to real, tested code:
+
+- refuses if the working tree isn't clean
+- refuses if local `HEAD` doesn't match the pushed remote branch (the tag must point at a commit GitHub can actually see)
+- runs `make test` before tagging
+- creates an annotated tag at the exact current commit and pushes only the tag
+
+The workflow then re-runs the test gate, builds checksummed `linux`/`darwin` × `amd64`/`arm64` binaries, publishes a GitHub Release explicitly pinned to that tag (never inferred or `latest`), and pushes a matching versioned Docker image. `make release-dry-run` builds the same artifacts locally without tagging or pushing anything, for a sanity check beforehand.
 
 ## Configuration
 

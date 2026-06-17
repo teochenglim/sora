@@ -43,6 +43,19 @@ lint: ## Run golangci-lint (falls back to go vet if not installed)
 		go vet ./...; \
 	fi
 
+.PHONY: security
+security: ## Run semgrep + trivy locally (same checks as .github/workflows/security.yml)
+	@if command -v semgrep >/dev/null 2>&1; then \
+		semgrep scan --config p/golang --config p/secrets --config p/owasp-top-ten --config p/sql-injection --config p/dockerfile --config p/kubernetes --error; \
+	else \
+		echo "semgrep not installed (pip install semgrep / brew install semgrep), skipping"; \
+	fi
+	@if command -v trivy >/dev/null 2>&1; then \
+		trivy fs --scanners vuln --severity CRITICAL,HIGH .; \
+	else \
+		echo "trivy not installed (brew install trivy), skipping"; \
+	fi
+
 .PHONY: fmt
 fmt: ## gofmt all source files
 	gofmt -l -w .
@@ -82,6 +95,33 @@ docker-down: ## Stop and remove the docker-compose stack
 .PHONY: docker-logs
 docker-logs: ## Tail logs from the docker-compose stack
 	docker compose -f deployments/docker/docker-compose.yaml logs -f
+
+.PHONY: release-dry-run
+release-dry-run: ## Build release binaries for every platform locally, without tagging or pushing anything
+	@mkdir -p dist
+	@for platform in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do \
+		goos=$${platform%/*}; goarch=$${platform#*/}; \
+		echo "building $$goos/$$goarch..."; \
+		CGO_ENABLED=0 GOOS=$$goos GOARCH=$$goarch go build -ldflags "$(LDFLAGS)" -o dist/sora-$$goos-$$goarch ./cmd/sora || exit 1; \
+		tar -C dist -czf dist/sora-$$goos-$$goarch.tar.gz sora-$$goos-$$goarch; \
+		rm dist/sora-$$goos-$$goarch; \
+	done
+	@cd dist && sha256sum *.tar.gz > checksums.txt
+	@ls -la dist/
+
+.PHONY: release
+release: ## Tag and push vX.Y.Z (VERSION=x.y.z required) — triggers .github/workflows/release.yml
+	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
+	@if [ -n "$$(git status --porcelain)" ]; then echo "working tree not clean — commit or stash first"; exit 1; fi
+	@git fetch -q origin
+	@if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse @{u} 2>/dev/null)" ]; then \
+		echo "HEAD does not match the remote tracking branch — push your commits first so the tag is bound to code that's actually on GitHub"; \
+		exit 1; \
+	fi
+	$(MAKE) test
+	git tag -a "v$(VERSION)" -m "Release v$(VERSION)" "$$(git rev-parse HEAD)"
+	git push origin "v$(VERSION)"
+	@echo "Tagged $$(git rev-parse --short HEAD) as v$(VERSION) and pushed — https://github.com/teochenglim/sora/actions"
 
 .PHONY: k8s-deploy
 k8s-deploy: ## Apply the plain Kubernetes manifests

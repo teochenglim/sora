@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
 	"gopkg.in/yaml.v3"
+	_ "modernc.org/sqlite" // pure-Go driver — keeps CGO_ENABLED=0 cross-compilation and Docker builds working
 
 	"github.com/teochenglim/sora/internal/config"
 )
@@ -18,11 +18,11 @@ const PromotionThreshold = 5
 
 // Pattern is a learned (alertname, action) pair with its success count.
 type Pattern struct {
-	ID            int64
-	AlertName     string
-	Action        string
-	SuccessCount  int
-	Promoted      bool
+	ID           int64
+	AlertName    string
+	Action       string
+	SuccessCount int
+	Promoted     bool
 }
 
 // LearningStore persists successful Tier-2/Tier-3 resolutions and
@@ -33,7 +33,7 @@ type LearningStore struct {
 
 // NewLearningStore opens (creating if needed) the SQLite database at path.
 func NewLearningStore(path string) (*LearningStore, error) {
-	db, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, fmt.Errorf("opening learning store %s: %w", path, err)
 	}

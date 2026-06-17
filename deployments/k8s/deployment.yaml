@@ -19,10 +19,18 @@ spec:
         app: sora
     spec:
       serviceAccountName: sora
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: sora
           image: ghcr.io/teochenglim/sora:latest
           args: ["--mode=full", "--config=/etc/sora/config.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false # writes sora-learning.db to the working directory
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 8080
               name: http

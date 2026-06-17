@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 FROM golang:1.26-alpine AS build
-# mattn/go-sqlite3 (the learning store) is cgo-based, so build tooling is required.
-# docker buildx builds this stage natively per --platform target, so no
-# explicit GOARCH cross-compilation is needed here.
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+# The learning store uses modernc.org/sqlite (pure Go, no cgo), so this is
+# a true static build — no gcc/musl-dev/sqlite-dev needed. docker buildx
+# builds this stage natively per --platform target, so no explicit
+# GOARCH cross-compilation is needed here.
 WORKDIR /src
 
 COPY go.mod go.sum ./
@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . .
 ARG VERSION=dev
-RUN CGO_ENABLED=1 go build -ldflags "-s -w -X main.buildVersion=${VERSION} -X github.com/teochenglim/sora/internal/webhook.Version=${VERSION}" \
+RUN CGO_ENABLED=0 go build -ldflags "-s -w -X main.buildVersion=${VERSION} -X github.com/teochenglim/sora/internal/webhook.Version=${VERSION}" \
     -o /out/sora ./cmd/sora
 
 FROM alpine:3.19
