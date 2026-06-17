@@ -76,6 +76,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: dist
+          pattern: sora-*
           merge-multiple: true
 
       - name: Generate checksums
