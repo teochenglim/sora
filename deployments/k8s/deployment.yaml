@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sora
+  labels:
+    app: sora
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: sora
+  template:
+    metadata:
+      labels:
+        app: sora
+    spec:
+      serviceAccountName: sora
+      containers:
+        - name: sora
+          image: ghcr.io/teochenglim/sora:latest
+          args: ["--mode=full", "--config=/etc/sora/config.yaml"]
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - secretRef:
+                name: sora-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /etc/sora/config.yaml
+              subPath: config.yaml
+            - name: rules
+              mountPath: /etc/sora/rules.yaml
+              subPath: rules.yaml
+      volumes:
+        - name: config
+          configMap:
+            name: sora-config
+        - name: rules
+          configMap:
+            name: sora-rules

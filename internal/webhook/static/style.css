@@ -1,0 +1,153 @@
+:root {
+  --bg: #0f1115;
+  --panel: #161922;
+  --border: #262b38;
+  --text: #e4e7ec;
+  --muted: #8b95a7;
+  --accent: #5cc8ff;
+  --good: #4ade80;
+  --warn: #fbbf24;
+  --bad: #f87171;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+
+header .sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 8px;
+}
+
+.pill {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.pill.ok { color: var(--good); border-color: var(--good); }
+.pill.error { color: var(--bad); border-color: var(--bad); }
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 28px 60px;
+  display: grid;
+  gap: 20px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 22px;
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: auto auto;
+  column-gap: 36px;
+  row-gap: 4px;
+  justify-content: start;
+  margin: 0;
+}
+
+.grid dt {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grid dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.metric {
+  background: #11141b;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.metric .name {
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-word;
+}
+
+.metric .labels {
+  font-size: 11px;
+  color: #5b6577;
+  margin-top: 2px;
+}
+
+.metric .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 6px;
+}
+
+#config-block {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #c7cdd9;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 20px 0 40px;
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}

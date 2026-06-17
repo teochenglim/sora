@@ -1,0 +1,31 @@
+services:
+  redis:
+    image: valkey/valkey:7-alpine
+    ports:
+      - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  sora:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    depends_on:
+      - redis
+    environment:
+      REDIS_ADDR: redis:6379
+      AI_API_KEY: ${AI_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      PAGERDUTY_KEY: ${PAGERDUTY_KEY:-}
+      NAMESPACE: default
+    ports:
+      - "8080:8080"
+    command: ["--mode=demo"]

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sora.fullname" . }}-config
+  labels:
+    {{- include "sora.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+{{- .Values.config.inline | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sora.fullname" . }}-rules
+  labels:
+    {{- include "sora.labels" . | nindent 4 }}
+data:
+  rules.yaml: |
+{{- .Values.rules.inline | nindent 4 }}

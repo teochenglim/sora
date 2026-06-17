@@ -1,0 +1,74 @@
+# Local test config: real Ollama for AI classification, real Redis for
+# dedup/incident state, no Slack/Telegram/K8s required. Use with:
+#   ./bin/sora --config=configs/config.ollama.yaml --mode=notify-only
+# notify-only skips the remediator, which otherwise requires a real
+# Kubernetes cluster (tools.NewClientset) — this is for testing the
+# classifier path against curl-simulated Prometheus alerts.
+
+server:
+  port: 8080
+  read_timeout: 30s
+  # Go's http.Server.WriteTimeout covers the entire handler execution, not
+  # just the response write — it must exceed ai.timeout below or a slow
+  # local model gets its connection killed before it can answer.
+  write_timeout: ${SERVER_TIMEOUT:-120s}
+  shutdown_timeout: 15s
+
+mode: notify-only
+
+ai:
+  provider: ${LLM_PROVIDER:-ollama}
+  api_key: ${AI_API_KEY}
+  base_url: ${LLM_BASE_URL}
+  model: ${LLM_MODEL:-gemma4-fast:latest}
+  temperature: ${LLM_TEMPERATURE:-0.1}
+  # Local reasoning models (e.g. gemma4-fast) can take 60s+ per call —
+  # override with LLM_TIMEOUT if your model is slower or faster.
+  timeout: ${LLM_TIMEOUT:-90s}
+  max_retries: 0 # avoid doubling an already-long call; raise once timeout is tuned
+
+dedup:
+  window_seconds: 300
+  redis_addr: ${REDIS_ADDR}
+  redis_password: ${REDIS_PASSWORD}
+
+notifications:
+  slack:
+    webhook_url: ${SLACK_WEBHOOK_URL}
+  telegram:
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+    default_chat_id: ${TELEGRAM_CHAT_ID}
+
+work_hours:
+  start: "00:00"
+  end: "23:59"
+  timezone: "UTC"
+  days: [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+
+business_mappings:
+  - pattern: "payment.*"
+    business_line: payments
+  - pattern: ".*"
+    business_line: platform
+
+fallback_rules:
+  critical: P0
+  warning: P1
+  info: P2
+
+source_mappings:
+  prometheus:
+    alertname: labels.alertname
+    severity: labels.severity
+    instance: labels.instance
+    namespace: labels.namespace
+    pod: labels.pod
+  generic:
+    alertname: alert_name
+    severity: level
+    instance: host
+    namespace: environment
+    pod: container
+
+rules_path: configs/rules.yaml
+prompts_path: configs/prompts.yaml

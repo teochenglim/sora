@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORA</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>SORA <span class="sub">Service Operations Remediation Agent</span></h1>
+    <div id="status-pill" class="pill">loading…</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Status</h2>
+      <dl id="status-grid" class="grid"></dl>
+    </section>
+
+    <section class="card">
+      <h2>Metrics</h2>
+      <div id="metrics-grid" class="metrics"></div>
+    </section>
+
+    <section class="card">
+      <h2>Configuration</h2>
+      <pre id="config-block">loading…</pre>
+    </section>
+  </main>
+
+  <footer>
+    <a href="/metrics">/metrics</a> (Prometheus exposition format) &middot;
+    <a href="/admin/patterns">/admin/patterns</a> &middot;
+    <a href="https://github.com/teochenglim/sora" target="_blank" rel="noopener">github.com/teochenglim/sora</a>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

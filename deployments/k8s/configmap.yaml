@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sora-config
+  labels:
+    app: sora
+data:
+  config.yaml: |
+    # See configs/config.yaml in the repo for the full annotated reference.
+    server:
+      port: 8080
+      read_timeout: 30s
+      write_timeout: 30s
+      shutdown_timeout: 15s
+    mode: full
+    ai:
+      provider: anthropic
+      model: claude-3-5-sonnet-20241022
+      temperature: 0.1
+      timeout: 8s
+      max_retries: 2
+    dedup:
+      window_seconds: 300
+      redis_addr: ${REDIS_ADDR}
+    remediation:
+      dry_run: false
+      tool_timeout: 30s
+      max_tier2_tool_calls: 3
+      approval_timeout: 120s
+      verification_wait: 60s
+    fallback_rules:
+      critical: P0
+      warning: P1
+      info: P2
+    source_mappings:
+      prometheus:
+        alertname: labels.alertname
+        severity: labels.severity
+        instance: labels.instance
+        namespace: labels.namespace
+        pod: labels.pod
+      generic:
+        alertname: alert_name
+        severity: level
+        instance: host
+        namespace: environment
+        pod: container
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sora-rules
+  labels:
+    app: sora
+data:
+  rules.yaml: |
+    classifier_rules:
+      - name: "crashloop-critical"
+        match:
+          alertname_regex: "CrashLoopBackOff"
+        result:
+          level: P0
+          business_line: platform
+          root_cause_hint: "crash looping"
+          actions: ["restart_service"]
+    remediation_rules:
+      - name: "crashloop-auto-restart"
+        match:
+          alertname_regex: "CrashLoopBackOff"
+          restart_count_lt: 3
+        action: restart_service
+        require_approval: false
+        max_per_hour: 3
+  prompts.yaml: |
+    # See configs/prompts.yaml in the repo; baked into the binary, kept here for reference only.

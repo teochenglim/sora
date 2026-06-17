@@ -1,0 +1,43 @@
+classifier_rules:
+  - name: "high-cpu-warning"
+    match:
+      alertname_regex: "HighCPU.*"
+      severity: "warning"
+    result:
+      level: P2
+      business_line: platform
+      root_cause_hint: "CPU saturation, check top processes"
+      actions: ["check_cpu_usage", "identify_hot_process"]
+
+  - name: "crashloop-critical"
+    match:
+      alertname_regex: "CrashLoopBackOff"
+    result:
+      level: P0
+      business_line: platform
+      root_cause_hint: "Container repeatedly crashing, check recent logs/events"
+      actions: ["restart_pod", "check_logs"]
+
+  - name: "oom-critical"
+    match:
+      alertname_regex: "OOMKilled"
+    result:
+      level: P0
+      business_line: platform
+      root_cause_hint: "Container exceeded memory limit"
+      actions: ["increase_memory_limit", "check_logs"]
+
+remediation_rules:
+  - name: "crashloop-auto-restart"
+    match:
+      alertname_regex: "CrashLoopBackOff"
+      restart_count_lt: 3
+    action: restart_service
+    require_approval: false
+    max_per_hour: 3
+
+  - name: "oom-needs-approval"
+    match:
+      alertname_regex: "OOMKilled"
+    action: increase_memory_limit
+    require_approval: true

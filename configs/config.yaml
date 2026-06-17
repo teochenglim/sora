@@ -1,0 +1,93 @@
+server:
+  port: 8080
+  read_timeout: 30s
+  # Go's http.Server.WriteTimeout covers the entire handler execution, not
+  # just the response write — keep it comfortably above ai.timeout or a
+  # slow classification call gets its connection killed mid-request.
+  write_timeout: ${SERVER_TIMEOUT:-30s}
+  shutdown_timeout: 15s
+
+mode: full # classifier | remediation | full | notify-only | demo
+
+ai:
+  provider: ${LLM_PROVIDER:-anthropic} # or openai, deepseek, ollama
+  api_key: ${AI_API_KEY}
+  base_url: ${LLM_BASE_URL}
+  model: ${LLM_MODEL:-claude-3-5-sonnet-20241022}
+  temperature: ${LLM_TEMPERATURE:-0.1}
+  timeout: ${LLM_TIMEOUT:-8s} # bump for slower self-hosted/local models (e.g. Ollama reasoning models)
+  max_retries: 2
+
+dedup:
+  window_seconds: 300
+  redis_addr: ${REDIS_ADDR}
+  redis_password: ${REDIS_PASSWORD}
+
+notifications:
+  slack:
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    interactive_signing_secret: ${SLACK_SIGNING_SECRET}
+  telegram:
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+    default_chat_id: ${TELEGRAM_CHAT_ID}
+  pagerduty:
+    integration_key: ${PAGERDUTY_KEY}
+
+work_hours:
+  start: "09:00"
+  end: "18:00"
+  timezone: "America/New_York"
+  days: [Mon, Tue, Wed, Thu, Fri]
+
+business_owners:
+  - name: payments
+    slack_id: "U12345678"
+    telegram_id: "123456789"
+  - name: platform
+    slack_id: "U87654321"
+    telegram_id: "987654321"
+
+business_mappings:
+  - pattern: "payment.*"
+    business_line: payments
+  - pattern: "checkout.*|cart.*"
+    business_line: commerce
+  - pattern: ".*"
+    business_line: platform
+
+remediation:
+  dry_run: false
+  kubeconfig: ${KUBECONFIG_PATH}
+  namespace: ${NAMESPACE}
+  tool_timeout: 30s
+  max_tier2_tool_calls: 3
+  approval_timeout: 120s
+  verification_wait: 60s
+  service_whitelist:
+    - worker-service
+    - batch-processor
+  service_blacklist:
+    - payments-api
+    - auth-service
+
+fallback_rules:
+  critical: P0
+  warning: P1
+  info: P2
+
+source_mappings:
+  prometheus:
+    alertname: labels.alertname
+    severity: labels.severity
+    instance: labels.instance
+    namespace: labels.namespace
+    pod: labels.pod
+  generic:
+    alertname: alert_name
+    severity: level
+    instance: host
+    namespace: environment
+    pod: container
+
+rules_path: configs/rules.yaml
+prompts_path: configs/prompts.yaml

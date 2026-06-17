@@ -1,0 +1,27 @@
+# Build artifacts
+/bin/
+/dist/
+*.exe
+
+# Test/coverage artifacts
+coverage.out
+coverage.html
+*.test
+
+# Local runtime data
+sora-learning.db
+*.db
+*.db-journal
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor/OS
+.DS_Store
+.idea/
+*.swp
+
+# Go
+/vendor/

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: sora
+description: Service Operations Remediation Agent — AI alert classification and tiered auto-remediation
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/teochenglim/sora
+sources:
+  - https://github.com/teochenglim/sora
+maintainers:
+  - name: SORA Contributors
