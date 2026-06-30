@@ -40,7 +40,17 @@ func TestSlackNotifier_P2SuppressedOutsideWorkHours(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	wh := notifier.WorkHours{Start: "09:00", End: "10:00", Timezone: "UTC", Days: []string{time.Now().UTC().Format("Mon")}}
+	// Window is offset 12h from the current time-of-day so "now" always
+	// falls outside it, regardless of when the test happens to run.
+	now := time.Now().UTC()
+	winStart := now.Add(12 * time.Hour)
+	winEnd := winStart.Add(1 * time.Hour)
+	wh := notifier.WorkHours{
+		Start:    winStart.Format("15:04"),
+		End:      winEnd.Format("15:04"),
+		Timezone: "UTC",
+		Days:     []string{now.Format("Mon")},
+	}
 	n := notifier.NewSlackNotifier(srv.URL, []config.BusinessOwner{{Name: "platform", SlackID: "U1"}}, wh)
 	inc := types.Incident{ID: "inc-2", Alert: types.ClassifiedAlert{Level: types.LevelP2, BusinessLine: "platform", Alert: types.Alert{AlertName: "HighCPU"}}}
 
