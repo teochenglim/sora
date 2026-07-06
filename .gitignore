@@ -17,6 +17,7 @@ sora-learning.db
 .env
 .env.*
 !.env.example
+.serena/
 
 # Editor/OS
 .DS_Store
