@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.26-alpine AS build
+FROM golang:1.27.2-alpine AS build
 # The learning store uses modernc.org/sqlite (pure Go, no cgo), so this is
 # a true static build — no gcc/musl-dev/sqlite-dev needed. docker buildx
 # builds this stage natively per --platform target, so no explicit
