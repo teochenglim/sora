@@ -1,9 +1,10 @@
 BINARY      := sora
 MODULE      := github.com/teochenglim/sora
-VERSION     := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS     := -X 'main.buildVersion=$(VERSION)' -X 'github.com/teochenglim/sora/internal/webhook.Version=$(VERSION)'
+# Read the current version from the VERSION file (no external tooling required).
+VERSION_CURRENT := $(shell cat VERSION 2>/dev/null || echo 0.0.0)
+LDFLAGS     := -X 'main.buildVersion=$(VERSION_CURRENT)' -X 'github.com/teochenglim/sora/internal/webhook.Version=$(VERSION_CURRENT)'
 REGISTRY    := ghcr.io/teochenglim
-IMAGE       := $(REGISTRY)/sora:$(VERSION)
+IMAGE       := $(REGISTRY)/sora:$(VERSION_CURRENT)
 PLATFORMS   := linux/amd64,linux/arm64
 
 .DEFAULT_GOAL := help
@@ -109,14 +110,26 @@ release-dry-run: ## Build release binaries for every platform locally, without t
 	@cd dist && sha256sum *.tar.gz > checksums.txt
 	@ls -la dist/
 
+.PHONY: version
+version: ## Print the version currently in VERSION
+	@echo $(VERSION_CURRENT)
+
+.PHONY: bump
+bump: ## Rewrite VERSION with the new version (VERSION=x.y.z required)
+	@if [ -z "$(VERSION)" ]; then echo "Usage: make bump VERSION=x.y.z"; exit 1; fi
+	@echo "$(VERSION)" > VERSION
+	@echo "VERSION -> $(VERSION)"
+
 .PHONY: release
-release: ## Test, tag, push — triggers GitHub Actions (VERSION=x.y.z required)
+release: ## Bump VERSION, push HEAD, tag, push the tag - triggers GitHub Actions (VERSION=x.y.z required)
 	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=x.y.z"; exit 1; fi
-	@if [ -n "$$(git status --porcelain)" ]; then echo "working tree not clean — commit or stash first"; exit 1; fi
-	git tag -a "v$(VERSION)" -m "Release v$(VERSION)"
+	$(MAKE) bump VERSION=$(VERSION)
+	git add VERSION
+	git commit --amend --no-edit
 	git push origin HEAD
-	git push origin "v$(VERSION)"
-	@echo "Released v$(VERSION) — https://github.com/teochenglim/sora/actions"
+	git tag v$(VERSION)
+	git push origin v$(VERSION)
+	@echo "Released v$(VERSION) - https://github.com/teochenglim/sora/actions"
 
 .PHONY: k8s-deploy
 k8s-deploy: ## Apply the plain Kubernetes manifests
